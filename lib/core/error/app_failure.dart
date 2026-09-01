@@ -54,6 +54,10 @@ enum LocationFailureReason {
 
   /// The user chose "Don't allow" — only app settings can grant it now.
   permissionDeniedForever,
+
+  /// Permission was granted, but no fix arrived within the time limit —
+  /// typically an emulator/simulator with no location configured.
+  timedOut,
 }
 
 /// The user's location couldn't be determined. Carries a [reason] because the
@@ -64,7 +68,11 @@ final class LocationFailure extends AppFailure {
 
   final LocationFailureReason reason;
 
-  bool get canOpenSettings => reason != LocationFailureReason.permissionDenied;
+  /// Only these two are actually fixable from OS settings; a plain denial is
+  /// better resolved by asking again, and a timeout isn't a settings problem.
+  bool get canOpenSettings =>
+      reason == LocationFailureReason.serviceDisabled ||
+      reason == LocationFailureReason.permissionDeniedForever;
 
   @override
   String get message => switch (reason) {
@@ -74,5 +82,8 @@ final class LocationFailure extends AppFailure {
           'Location permission is needed to find places near you.',
         LocationFailureReason.permissionDeniedForever =>
           'Location permission is blocked. Enable it in app settings.',
+        LocationFailureReason.timedOut =>
+          'Couldn’t get your location in time. On an emulator, set a location '
+              'in Extended Controls, or use an approximate one below.',
       };
 }

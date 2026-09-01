@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -13,8 +15,8 @@ final LatLng kFallbackLocation = LatLng(37.4220, -122.0841);
 abstract interface class LocationService {
   /// The device's current position.
   ///
-  /// Throws [LocationFailure] for every "can't get location" case:
-  /// services off, permission denied, permission denied forever.
+  /// Throws [LocationFailure] for every "can't get location" case: services
+  /// off, permission denied, permission denied forever, or no fix in time.
   Future<LatLng> currentLocation();
 
   /// Opens the OS settings screen where the user can re-grant permission or
@@ -24,6 +26,11 @@ abstract interface class LocationService {
 
 class GeolocatorLocationService implements LocationService {
   const GeolocatorLocationService();
+
+  /// Without a limit, `getCurrentPosition` can hang forever if no fix ever
+  /// arrives — very possible on an emulator/simulator with no location set.
+  /// This turns that into an actionable failure instead of an endless spinner.
+  static const Duration _fixTimeout = Duration(seconds: 10);
 
   @override
   Future<LatLng> currentLocation() async {
@@ -49,12 +56,17 @@ class GeolocatorLocationService implements LocationService {
         break;
     }
 
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-      ),
-    );
-    return LatLng(position.latitude, position.longitude);
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: _fixTimeout,
+        ),
+      );
+      return LatLng(position.latitude, position.longitude);
+    } on TimeoutException {
+      throw const LocationFailure(LocationFailureReason.timedOut);
+    }
   }
 
   @override
