@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:places_explorer/features/favorites/presentation/cubit/favorites_cubit.dart';
+import 'package:places_explorer/features/notes/presentation/cubit/notes_cubit.dart';
 import 'package:places_explorer/features/places/domain/entities/place.dart';
 import 'package:places_explorer/features/places/domain/entities/place_category.dart';
 import 'package:places_explorer/features/places/presentation/widgets/place_details_view.dart';
@@ -34,8 +35,11 @@ void main() {
   }
 
   Widget wrap(Place place) => MaterialApp(
-        home: BlocProvider(
-          create: (_) => FavoritesCubit(),
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => FavoritesCubit()),
+            BlocProvider(create: (_) => NotesCubit()),
+          ],
           child: Scaffold(body: PlaceDetailsView(place: place)),
         ),
       );

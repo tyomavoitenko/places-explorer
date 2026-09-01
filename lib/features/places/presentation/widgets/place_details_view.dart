@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/formatters.dart';
+import '../../../notes/presentation/cubit/notes_cubit.dart';
+import '../../../notes/presentation/widgets/add_note_form.dart';
+import '../../../notes/presentation/widgets/place_note_card.dart';
 import '../../domain/entities/place.dart';
 import 'favorite_button.dart';
 import 'place_category_ui.dart';
@@ -71,7 +75,39 @@ class PlaceDetailsView extends StatelessWidget {
             ],
           ),
         ],
+        const SizedBox(height: 20),
+        _NoteSection(place: place),
       ],
+    );
+  }
+}
+
+/// Shows the saved note or an "add note" prompt, driven by [NotesCubit].
+class _NoteSection extends StatelessWidget {
+  const _NoteSection({required this.place});
+
+  final Place place;
+
+  @override
+  Widget build(BuildContext context) {
+    final note = context.select<NotesCubit, PlaceNote?>(
+      (cubit) => cubit.state.noteFor(place.id),
+    );
+
+    if (note == null) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          onPressed: () => showAddNoteSheet(context, place),
+          icon: const Icon(Icons.edit_note),
+          label: const Text('Add note'),
+        ),
+      );
+    }
+
+    return PlaceNoteCard(
+      note: note,
+      onEdit: () => showAddNoteSheet(context, place, existing: note),
     );
   }
 }
