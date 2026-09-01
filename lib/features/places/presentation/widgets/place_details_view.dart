@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/place.dart';
+import 'favorite_button.dart';
 import 'place_category_ui.dart';
 
 /// The details content for a place, shared by the bottom sheet and the
@@ -34,6 +35,7 @@ class PlaceDetailsView extends StatelessWidget {
             Expanded(
               child: Text(place.name, style: theme.textTheme.headlineSmall),
             ),
+            FavoriteButton(place: place),
           ],
         ),
         const SizedBox(height: 8),

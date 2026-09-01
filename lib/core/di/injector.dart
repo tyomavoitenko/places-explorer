@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/favorites/presentation/cubit/favorites_cubit.dart';
 import '../../features/places/data/api/places_api_service.dart';
 import '../../features/places/data/repositories/places_repository_impl.dart';
 import '../../features/places/domain/repositories/places_repository.dart';
@@ -27,6 +28,7 @@ final GetIt getIt = GetIt.instance;
 void configureDependencies() {
   _registerCore();
   _registerPlaces();
+  _registerFavorites();
 }
 
 void _registerCore() {
@@ -64,4 +66,10 @@ void _registerPlaces() {
   getIt.registerFactory<PlacesBloc>(
     () => PlacesBloc(getIt<PlacesRepository>(), getIt<LocationService>()),
   );
+}
+
+void _registerFavorites() {
+  // App-wide, persisted state -> a single instance for the whole session,
+  // provided above the router in `app.dart`.
+  getIt.registerLazySingleton<FavoritesCubit>(FavoritesCubit.new);
 }
