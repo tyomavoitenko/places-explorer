@@ -11,7 +11,12 @@ part 'places_event.freezed.dart';
 /// handlers get exact payload types and the compiler enforces we handle each one.
 @freezed
 sealed class PlacesEvent with _$PlacesEvent {
+  /// App launched: acquire the device location (permission flow included), then
+  /// fetch. On a location failure the BLoC surfaces it as a failure state.
+  const factory PlacesEvent.started() = PlacesStarted;
+
   /// The user's location became known (or changed). Triggers a fetch.
+  /// Also used as the "use approximate location" fallback after a denial.
   const factory PlacesEvent.locationChanged(LatLng location) =
       PlacesLocationChanged;
 
@@ -27,4 +32,9 @@ sealed class PlacesEvent with _$PlacesEvent {
 
   /// Pull-to-refresh / retry. Re-runs the last fetch.
   const factory PlacesEvent.refreshRequested() = PlacesRefreshRequested;
+
+  /// Open the OS location/permission settings screen. Fire-and-forget — no
+  /// state change; the user retries afterwards.
+  const factory PlacesEvent.locationSettingsRequested() =
+      PlacesLocationSettingsRequested;
 }
