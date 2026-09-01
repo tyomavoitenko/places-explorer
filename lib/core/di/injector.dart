@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/app_env.dart';
+import '../network/dio_factory.dart';
 import '../router/app_router.dart';
 
 /// Single service-locator instance for the app.
@@ -20,6 +23,15 @@ void configureDependencies() {
   // Router holds navigation state for the whole app lifetime -> lazy singleton.
   getIt.registerLazySingleton<GoRouter>(AppRouter.create);
 
-  // Feature dependencies (Dio, API service, repositories, BLoCs) are registered
-  // in their own phases to keep this file readable.
+  // One configured HTTP client, shared by every API service. Lazy: only built
+  // if the app actually makes a network call in this session.
+  getIt.registerLazySingleton<Dio>(
+    () => DioFactory.create(
+      baseUrl: AppEnv.geoapifyBaseUrl,
+      apiKey: AppEnv.geoapifyApiKey,
+    ),
+  );
+
+  // API services, repositories and BLoCs are registered in their own phases
+  // to keep this file readable.
 }
