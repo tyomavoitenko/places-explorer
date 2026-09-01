@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/places/data/api/places_api_service.dart';
 import '../../features/places/data/repositories/places_repository_impl.dart';
 import '../../features/places/domain/repositories/places_repository.dart';
+import '../../features/places/presentation/bloc/places_bloc.dart';
 import '../config/app_env.dart';
 import '../network/dio_factory.dart';
 import '../router/app_router.dart';
@@ -47,9 +48,16 @@ void _registerPlaces() {
     () => PlacesApiService(getIt<Dio>()),
   );
 
-  // Repository is stateless too; the BLoC (registered later as a factory) will
-  // depend on this interface, never on the implementation.
+  // Repository is stateless too; the BLoC depends on this interface, never on
+  // the implementation.
   getIt.registerLazySingleton<PlacesRepository>(
     () => PlacesRepositoryImpl(getIt<PlacesApiService>()),
+  );
+
+  // Factory: each map screen gets its own BLoC instance with its own lifecycle,
+  // disposed with the screen. Never a singleton — that would leak state between
+  // navigations.
+  getIt.registerFactory<PlacesBloc>(
+    () => PlacesBloc(getIt<PlacesRepository>()),
   );
 }
