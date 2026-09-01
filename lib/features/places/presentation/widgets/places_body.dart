@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/app_failure.dart';
-import '../../../../core/location/location_service.dart';
 import '../bloc/places_bloc.dart';
-import 'place_list_tile.dart';
+import 'place_status_views.dart';
+import 'places_map.dart';
+import 'selected_place_card.dart';
 
-/// Renders the five [PlacesStatus] cases. The map replaces the list body in a
-/// later phase; the state handling stays the same.
+/// The map plus every [PlacesStatus] overlay stacked on top of it. The list is
+/// a separate bottom sheet (see [PlacesListSheet]).
 class PlacesBody extends StatelessWidget {
   const PlacesBody({super.key});
 
@@ -18,152 +19,75 @@ class PlacesBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PlacesBloc, PlacesState>(
       builder: (context, state) {
-        return switch (state.status) {
-          // Refresh over existing data: keep the list, show a thin progress bar.
-          PlacesStatus.loading when state.places.isNotEmpty =>
-            _PlacesList(state: state, refreshing: true),
-          PlacesStatus.initial || PlacesStatus.loading =>
-            const Center(child: CircularProgressIndicator()),
-          PlacesStatus.failure when state.failure is LocationFailure =>
-            _LocationFailureView(failure: state.failure! as LocationFailure),
-          PlacesStatus.failure => _CenteredMessage(
-              icon: Icons.cloud_off,
-              text: state.failure?.message ?? 'Something went wrong.',
-              onRetry: () => _refresh(context),
-            ),
-          PlacesStatus.empty => _CenteredMessage(
-              icon: Icons.wrong_location_outlined,
-              text: 'No places found within range.',
-              onRetry: () => _refresh(context),
-            ),
-          PlacesStatus.success => _PlacesList(state: state),
-        };
-      },
-    );
-  }
-}
-
-class _PlacesList extends StatelessWidget {
-  const _PlacesList({required this.state, this.refreshing = false});
-
-  final PlacesState state;
-  final bool refreshing;
-
-  @override
-  Widget build(BuildContext context) {
-    final places = state.visiblePlaces;
-
-    if (places.isEmpty) {
-      return _CenteredMessage(
-        icon: Icons.search_off,
-        text: 'Nothing matches "${state.searchQuery}".',
-      );
-    }
-
-    return Column(
-      children: [
-        if (refreshing) const LinearProgressIndicator(minHeight: 2),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async => context
-                .read<PlacesBloc>()
-                .add(const PlacesEvent.refreshRequested()),
-            child: ListView.separated(
-              itemCount: places.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) =>
-                  PlaceListTile(place: places[index]),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CenteredMessage extends StatelessWidget {
-  const _CenteredMessage({required this.icon, required this.text, this.onRetry});
-
-  final IconData icon;
-  final String text;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        return Stack(
           children: [
-            Icon(icon, size: 48, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 12),
-            Text(text, textAlign: TextAlign.center),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.tonal(
-                onPressed: onRetry,
-                child: const Text('Try again'),
+            const Positioned.fill(child: PlacesMap()),
+
+            // First-load spinner — only when there's nothing to show yet.
+            if (state.status == PlacesStatus.loading && state.places.isEmpty)
+              const Positioned.fill(
+                child: ColoredBox(
+                  color: Color(0x11000000),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 
-/// Location-permission / services-off failure. Offers: open settings, retry the
-/// location flow, or fall back to an approximate location.
-class _LocationFailureView extends StatelessWidget {
-  const _LocationFailureView({required this.failure});
+            // Refresh over existing markers: thin bar, map stays interactive.
+            if (state.status == PlacesStatus.loading && state.places.isNotEmpty)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
 
-  final LocationFailure failure;
+            if (state.status == PlacesStatus.failure)
+              Positioned.fill(
+                child: state.failure is LocationFailure
+                    ? LocationFailureView(
+                        failure: state.failure! as LocationFailure,
+                      )
+                    : CenteredMessage(
+                        icon: Icons.cloud_off,
+                        text: state.failure?.message ?? 'Something went wrong.',
+                        onRetry: () => _refresh(context),
+                      ),
+              ),
 
-  @override
-  Widget build(BuildContext context) {
-    final bloc = context.read<PlacesBloc>();
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.location_disabled,
-              size: 48,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 12),
-            Text(failure.message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 8,
-              children: [
-                if (failure.canOpenSettings)
-                  FilledButton.tonal(
-                    onPressed: () => bloc.add(
-                      const PlacesEvent.locationSettingsRequested(),
-                    ),
-                    child: const Text('Open settings'),
-                  ),
-                OutlinedButton(
-                  onPressed: () => bloc.add(const PlacesEvent.started()),
-                  child: const Text('Try again'),
+            if (state.status == PlacesStatus.empty)
+              Positioned.fill(
+                child: CenteredMessage(
+                  icon: Icons.wrong_location_outlined,
+                  text: 'No places found within range.',
+                  onRetry: () => _refresh(context),
                 ),
-                TextButton(
-                  onPressed: () => bloc.add(
-                    PlacesEvent.locationChanged(kFallbackLocation),
+              ),
+
+            // Search filtered everything out — non-blocking hint, keep the map.
+            if (state.status == PlacesStatus.success &&
+                state.visiblePlaces.isEmpty &&
+                state.searchQuery.trim().isNotEmpty)
+              Positioned(
+                top: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Chip(
+                    avatar: const Icon(Icons.search_off, size: 18),
+                    label: Text('Nothing matches "${state.searchQuery}"'),
                   ),
-                  child: const Text('Use approximate location'),
                 ),
-              ],
+              ),
+
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(child: SelectedPlaceCard()),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

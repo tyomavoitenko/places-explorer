@@ -249,6 +249,38 @@ void main() {
     );
   });
 
+  group('placeSelected', () {
+    blocTest<PlacesBloc, PlacesState>(
+      'stores and clears the selected id',
+      build: () => PlacesBloc(repository, locationService),
+      seed: () => PlacesState(places: results),
+      act: (bloc) => bloc
+        ..add(const PlacesEvent.placeSelected('1'))
+        ..add(const PlacesEvent.placeSelected(null)),
+      expect: () => [
+        isA<PlacesState>()
+            .having((s) => s.selectedPlaceId, 'id', '1')
+            .having((s) => s.selectedPlace?.name, 'selectedPlace', 'Blue Bottle'),
+        isA<PlacesState>().having((s) => s.selectedPlaceId, 'id', isNull),
+      ],
+    );
+
+    blocTest<PlacesBloc, PlacesState>(
+      'a new fetch clears a stale selection',
+      setUp: () => stubNearby(results),
+      build: () => PlacesBloc(repository, locationService),
+      seed: () => PlacesState(location: location, selectedPlaceId: 'old-id'),
+      act: (bloc) => bloc.add(PlacesEvent.locationChanged(location)),
+      expect: () => [
+        isA<PlacesState>()
+            .having((s) => s.status, 'status', PlacesStatus.loading),
+        isA<PlacesState>()
+            .having((s) => s.status, 'status', PlacesStatus.success)
+            .having((s) => s.selectedPlaceId, 'id', isNull),
+      ],
+    );
+  });
+
   group('refreshRequested', () {
     blocTest<PlacesBloc, PlacesState>(
       're-runs the last fetch with the current location and category',

@@ -7,6 +7,7 @@ import '../../../../core/router/app_router.dart';
 import '../bloc/places_bloc.dart';
 import '../widgets/category_filter_bar.dart';
 import '../widgets/places_body.dart';
+import '../widgets/places_list_sheet.dart';
 import '../widgets/places_search_field.dart';
 
 class PlacesMapPage extends StatelessWidget {
@@ -26,6 +27,13 @@ class PlacesMapPage extends StatelessWidget {
               onPressed: () => context.push(AppRoute.favorites),
             ),
           ],
+        ),
+        floatingActionButton: Builder(
+          builder: (context) => FloatingActionButton(
+            tooltip: 'Show list',
+            onPressed: () => PlacesListSheet.show(context),
+            child: const Icon(Icons.format_list_bulleted),
+          ),
         ),
         body: const Column(
           children: [

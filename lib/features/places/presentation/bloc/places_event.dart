@@ -30,6 +30,9 @@ sealed class PlacesEvent with _$PlacesEvent {
   const factory PlacesEvent.searchQueryChanged(String query) =
       PlacesSearchQueryChanged;
 
+  /// A marker (or list row) was tapped. `null` clears the selection.
+  const factory PlacesEvent.placeSelected(String? placeId) = PlacesPlaceSelected;
+
   /// Pull-to-refresh / retry. Re-runs the last fetch.
   const factory PlacesEvent.refreshRequested() = PlacesRefreshRequested;
 

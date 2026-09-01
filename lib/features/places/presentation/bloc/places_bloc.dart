@@ -30,6 +30,7 @@ class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
       _onSearchQueryChanged,
       transformer: restartable(),
     );
+    on<PlacesPlaceSelected>(_onPlaceSelected);
     on<PlacesRefreshRequested>(_onRefreshRequested, transformer: droppable());
     on<PlacesLocationSettingsRequested>(
       _onLocationSettingsRequested,
@@ -84,6 +85,10 @@ class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
     await _fetch(emit, location: location, category: state.selectedCategory);
   }
 
+  void _onPlaceSelected(PlacesPlaceSelected event, Emitter<PlacesState> emit) {
+    emit(state.copyWith(selectedPlaceId: event.placeId));
+  }
+
   Future<void> _onLocationSettingsRequested(
     PlacesLocationSettingsRequested event,
     Emitter<PlacesState> emit,
@@ -124,6 +129,8 @@ class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
           places: places,
           location: location,
           selectedCategory: category,
+          // A fresh result set invalidates any prior marker selection.
+          selectedPlaceId: null,
         ),
       );
     } on AppFailure catch (failure) {
