@@ -4,7 +4,10 @@
 /// the variants carry almost no data and never need `copyWith`. Freezed earns
 /// its keep on data-rich immutable models; here it would only add generated
 /// code. Exhaustive `switch` on the sealed type gives us the same safety.
-sealed class AppFailure {
+///
+/// Implements [Exception] so repositories can `throw` it directly and BLoCs can
+/// `catch (e)` and match on `AppFailure` — no `Result`/`Either` wrapper needed.
+sealed class AppFailure implements Exception {
   const AppFailure();
 
   /// Text safe to display directly to the user.

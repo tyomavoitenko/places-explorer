@@ -1,0 +1,67 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Stan The T-Rex",
+        "city": "Mountain View",
+        "lon": -122.0847865,
+        "lat": 37.4218584,
+        "formatted": "Stan The T-Rex, Charleston Road, Mountain View, CA 94043, United States of America",
+        "address_line1": "Stan The T-Rex",
+        "address_line2": "Charleston Road, Mountain View, CA 94043, United States of America",
+        "categories": [
+          "tourism",
+          "tourism.sights",
+          "tourism.sights.memorial",
+          "tourism.sights.memorial.monument",
+          "wheelchair",
+          "wheelchair.limited"
+        ],
+        "description": "No matter how big and bad you are, if you don't evolve, you go extinct.",
+        "distance": 71,
+        "place_id": "511c295b246d855ec0597dc5bf74ffb54240f00103f90169b512b90000000092030e5374616e2054686520542d526578"
+      },
+      "geometry": { "type": "Point", "coordinates": [-122.0847865, 37.4218584] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "city": "Mountain View",
+        "lon": -122.0864445,
+        "lat": 37.4221368,
+        "formatted": "Mountain View, California, United States of America",
+        "address_line1": "Mountain View, California",
+        "address_line2": "United States of America",
+        "categories": ["leisure", "leisure.park"],
+        "distance": 178,
+        "place_id": "51532948fa80855ec059370c884f09b64240f00102f9010e4a3c1200000000"
+      },
+      "geometry": { "type": "Point", "coordinates": [-122.08599717185034, 37.42215913908915] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Costa",
+        "city": "Mountain View",
+        "lon": -122.0835102,
+        "lat": 37.4200095,
+        "formatted": "Costa, Huff Avenue, Mountain View, CA 94043, United States of America",
+        "address_line1": "Costa",
+        "address_line2": "Huff Avenue, Mountain View, CA 94043, United States of America",
+        "categories": [
+          "catering",
+          "catering.cafe",
+          "catering.cafe.coffee",
+          "catering.cafe.coffee_shop",
+          "no_access"
+        ],
+        "opening_hours": "Mo-Fr 07:00-10:30,11:30-14:00",
+        "distance": 225,
+        "place_id": "517a782a3b58855ec05931410ddfc2b54240f00103f9014459371101000000920305436f737461"
+      },
+      "geometry": { "type": "Point", "coordinates": [-122.0835102, 37.4200095] }
+    }
+  ]
+}

@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/places/data/api/places_api_service.dart';
+import '../../features/places/data/repositories/places_repository_impl.dart';
+import '../../features/places/domain/repositories/places_repository.dart';
 import '../config/app_env.dart';
 import '../network/dio_factory.dart';
 import '../router/app_router.dart';
@@ -20,6 +23,11 @@ final GetIt getIt = GetIt.instance;
 /// * `registerLazySingleton`    – created on first use, one instance forever.
 /// * `registerFactory`          – new instance on every `getIt<T>()` call.
 void configureDependencies() {
+  _registerCore();
+  _registerPlaces();
+}
+
+void _registerCore() {
   // Router holds navigation state for the whole app lifetime -> lazy singleton.
   getIt.registerLazySingleton<GoRouter>(AppRouter.create);
 
@@ -31,7 +39,17 @@ void configureDependencies() {
       apiKey: AppEnv.geoapifyApiKey,
     ),
   );
+}
 
-  // API services, repositories and BLoCs are registered in their own phases
-  // to keep this file readable.
+void _registerPlaces() {
+  // Stateless HTTP wrapper -> one instance is enough.
+  getIt.registerLazySingleton<PlacesApiService>(
+    () => PlacesApiService(getIt<Dio>()),
+  );
+
+  // Repository is stateless too; the BLoC (registered later as a factory) will
+  // depend on this interface, never on the implementation.
+  getIt.registerLazySingleton<PlacesRepository>(
+    () => PlacesRepositoryImpl(getIt<PlacesApiService>()),
+  );
 }
