@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/place.dart';
 import '../bloc/places_bloc.dart';
+import 'favorite_button.dart';
 import 'place_category_ui.dart';
 import 'place_details_sheet.dart';
 
@@ -73,6 +74,7 @@ class _Card extends StatelessWidget {
                   ],
                 ),
               ),
+              FavoriteButton(place: place),
               IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: 'Dismiss',

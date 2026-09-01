@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:places_explorer/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:places_explorer/features/places/domain/entities/place.dart';
 import 'package:places_explorer/features/places/domain/entities/place_category.dart';
 import 'package:places_explorer/features/places/presentation/widgets/place_details_view.dart';
 
+import '../../support/in_memory_hydrated_storage.dart';
+
 void main() {
+  useInMemoryHydratedStorage();
+
   Place buildPlace({
     String? address,
     String? openingHours,
@@ -27,8 +33,12 @@ void main() {
     );
   }
 
-  Widget wrap(Place place) =>
-      MaterialApp(home: Scaffold(body: PlaceDetailsView(place: place)));
+  Widget wrap(Place place) => MaterialApp(
+        home: BlocProvider(
+          create: (_) => FavoritesCubit(),
+          child: Scaffold(body: PlaceDetailsView(place: place)),
+        ),
+      );
 
   testWidgets('renders name, category and distance', (tester) async {
     await tester.pumpWidget(wrap(buildPlace()));

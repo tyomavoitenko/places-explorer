@@ -7,6 +7,8 @@ import 'package:places_explorer/features/places/domain/entities/place.dart';
 import 'package:places_explorer/features/places/domain/entities/place_category.dart';
 import 'package:places_explorer/features/places/domain/repositories/places_repository.dart';
 
+import 'support/in_memory_hydrated_storage.dart';
+
 /// Stubs so the smoke test never touches the network or platform channels.
 class _StubPlacesRepository implements PlacesRepository {
   @override
@@ -29,6 +31,8 @@ class _StubLocationService implements LocationService {
 }
 
 void main() {
+  useInMemoryHydratedStorage();
+
   setUp(() {
     configureDependencies();
     getIt
