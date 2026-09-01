@@ -1,15 +1,40 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:places_explorer/app.dart';
 import 'package:places_explorer/core/di/injector.dart';
+import 'package:places_explorer/features/places/domain/entities/place.dart';
+import 'package:places_explorer/features/places/domain/entities/place_category.dart';
+import 'package:places_explorer/features/places/domain/repositories/places_repository.dart';
+
+/// Stub so the smoke test never touches the network.
+class _StubPlacesRepository implements PlacesRepository {
+  @override
+  Future<List<Place>> getNearbyPlaces({
+    required double latitude,
+    required double longitude,
+    PlaceCategory? category,
+    int radiusMeters = 1500,
+  }) async {
+    return const [];
+  }
+}
 
 void main() {
-  setUp(configureDependencies);
+  setUp(() {
+    configureDependencies();
+    getIt
+      ..unregister<PlacesRepository>()
+      ..registerFactory<PlacesRepository>(_StubPlacesRepository.new);
+  });
   tearDown(getIt.reset);
 
-  testWidgets('app boots to the map page', (tester) async {
+  testWidgets('app boots to the map page and reaches a rendered state',
+      (tester) async {
     await tester.pumpWidget(const PlacesExplorerApp());
+    // Let the initial locationChanged -> fetch cycle settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Places Explorer'), findsOneWidget);
-    expect(find.text('Map goes here'), findsOneWidget);
+    expect(find.text('No places found within range.'), findsOneWidget);
   });
 }
