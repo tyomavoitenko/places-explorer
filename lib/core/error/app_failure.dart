@@ -44,3 +44,35 @@ final class UnexpectedFailure extends AppFailure {
   @override
   String get message => 'Something went wrong. Please try again.';
 }
+
+enum LocationFailureReason {
+  /// Device location services (GPS) are switched off system-wide.
+  serviceDisabled,
+
+  /// The user dismissed the permission prompt; asking again may still work.
+  permissionDenied,
+
+  /// The user chose "Don't allow" — only app settings can grant it now.
+  permissionDeniedForever,
+}
+
+/// The user's location couldn't be determined. Carries a [reason] because the
+/// UI reacts differently to each (retry vs. open settings), but a single class
+/// with an enum stays lighter than three near-identical sibling types.
+final class LocationFailure extends AppFailure {
+  const LocationFailure(this.reason);
+
+  final LocationFailureReason reason;
+
+  bool get canOpenSettings => reason != LocationFailureReason.permissionDenied;
+
+  @override
+  String get message => switch (reason) {
+        LocationFailureReason.serviceDisabled =>
+          'Location services are off. Turn them on to see places near you.',
+        LocationFailureReason.permissionDenied =>
+          'Location permission is needed to find places near you.',
+        LocationFailureReason.permissionDeniedForever =>
+          'Location permission is blocked. Enable it in app settings.',
+      };
+}

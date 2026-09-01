@@ -7,6 +7,7 @@ import '../../features/places/data/repositories/places_repository_impl.dart';
 import '../../features/places/domain/repositories/places_repository.dart';
 import '../../features/places/presentation/bloc/places_bloc.dart';
 import '../config/app_env.dart';
+import '../location/location_service.dart';
 import '../network/dio_factory.dart';
 import '../router/app_router.dart';
 
@@ -40,6 +41,9 @@ void _registerCore() {
       apiKey: AppEnv.geoapifyApiKey,
     ),
   );
+
+  // Stateless wrapper over the geolocator plugin.
+  getIt.registerLazySingleton<LocationService>(GeolocatorLocationService.new);
 }
 
 void _registerPlaces() {
@@ -58,6 +62,6 @@ void _registerPlaces() {
   // disposed with the screen. Never a singleton — that would leak state between
   // navigations.
   getIt.registerFactory<PlacesBloc>(
-    () => PlacesBloc(getIt<PlacesRepository>()),
+    () => PlacesBloc(getIt<PlacesRepository>(), getIt<LocationService>()),
   );
 }

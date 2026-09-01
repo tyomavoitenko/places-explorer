@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/app_failure.dart';
+import '../../../../core/location/location_service.dart';
 import '../bloc/places_bloc.dart';
 import 'place_list_tile.dart';
 
@@ -22,6 +24,8 @@ class PlacesBody extends StatelessWidget {
             _PlacesList(state: state, refreshing: true),
           PlacesStatus.initial || PlacesStatus.loading =>
             const Center(child: CircularProgressIndicator()),
+          PlacesStatus.failure when state.failure is LocationFailure =>
+            _LocationFailureView(failure: state.failure! as LocationFailure),
           PlacesStatus.failure => _CenteredMessage(
               icon: Icons.cloud_off,
               text: state.failure?.message ?? 'Something went wrong.',
@@ -102,6 +106,61 @@ class _CenteredMessage extends StatelessWidget {
                 child: const Text('Try again'),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Location-permission / services-off failure. Offers: open settings, retry the
+/// location flow, or fall back to an approximate location.
+class _LocationFailureView extends StatelessWidget {
+  const _LocationFailureView({required this.failure});
+
+  final LocationFailure failure;
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<PlacesBloc>();
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.location_disabled,
+              size: 48,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 12),
+            Text(failure.message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              children: [
+                if (failure.canOpenSettings)
+                  FilledButton.tonal(
+                    onPressed: () => bloc.add(
+                      const PlacesEvent.locationSettingsRequested(),
+                    ),
+                    child: const Text('Open settings'),
+                  ),
+                OutlinedButton(
+                  onPressed: () => bloc.add(const PlacesEvent.started()),
+                  child: const Text('Try again'),
+                ),
+                TextButton(
+                  onPressed: () => bloc.add(
+                    PlacesEvent.locationChanged(kFallbackLocation),
+                  ),
+                  child: const Text('Use approximate location'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

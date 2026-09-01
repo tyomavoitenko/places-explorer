@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/error/app_failure.dart';
+import '../../../../core/location/location_service.dart';
 import '../../domain/entities/place_category.dart';
 import '../../domain/repositories/places_repository.dart';
 import 'places_event.dart';
@@ -20,7 +21,9 @@ export 'places_state.dart';
 ///   burst does work, and it's an in-memory filter, not a network call.
 /// * refresh -> `droppable`: taps while a refresh is running are ignored.
 class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
-  PlacesBloc(this._repository) : super(const PlacesState()) {
+  PlacesBloc(this._repository, this._locationService)
+      : super(const PlacesState()) {
+    on<PlacesStarted>(_onStarted, transformer: restartable());
     on<PlacesLocationChanged>(_onLocationChanged, transformer: restartable());
     on<PlacesCategorySelected>(_onCategorySelected, transformer: restartable());
     on<PlacesSearchQueryChanged>(
@@ -28,11 +31,29 @@ class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
       transformer: restartable(),
     );
     on<PlacesRefreshRequested>(_onRefreshRequested, transformer: droppable());
+    on<PlacesLocationSettingsRequested>(
+      _onLocationSettingsRequested,
+      transformer: droppable(),
+    );
   }
 
   final PlacesRepository _repository;
+  final LocationService _locationService;
 
   static const Duration _searchDebounce = Duration(milliseconds: 300);
+
+  Future<void> _onStarted(
+    PlacesStarted event,
+    Emitter<PlacesState> emit,
+  ) async {
+    emit(state.copyWith(status: PlacesStatus.loading, failure: null));
+    try {
+      final location = await _locationService.currentLocation();
+      await _fetch(emit, location: location, category: state.selectedCategory);
+    } on LocationFailure catch (failure) {
+      emit(state.copyWith(status: PlacesStatus.failure, failure: failure));
+    }
+  }
 
   Future<void> _onLocationChanged(
     PlacesLocationChanged event,
@@ -61,6 +82,17 @@ class PlacesBloc extends Bloc<PlacesEvent, PlacesState> {
     final location = state.location;
     if (location == null) return;
     await _fetch(emit, location: location, category: state.selectedCategory);
+  }
+
+  Future<void> _onLocationSettingsRequested(
+    PlacesLocationSettingsRequested event,
+    Emitter<PlacesState> emit,
+  ) async {
+    final failure = state.failure;
+    await _locationService.openSettings(
+      permanentlyDenied: failure is LocationFailure &&
+          failure.reason == LocationFailureReason.permissionDeniedForever,
+    );
   }
 
   Future<void> _onSearchQueryChanged(
