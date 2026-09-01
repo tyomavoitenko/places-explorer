@@ -25,11 +25,23 @@ abstract class PlacesState with _$PlacesState {
     PlaceCategory? selectedCategory,
     LatLng? location,
 
+    /// `id` of the place whose marker is currently tapped, if any.
+    String? selectedPlaceId,
+
     /// Set only when [status] is [PlacesStatus.failure].
     AppFailure? failure,
   }) = _PlacesState;
 
   const PlacesState._();
+
+  /// The tapped place, resolved against the full [places] list.
+  Place? get selectedPlace {
+    if (selectedPlaceId == null) return null;
+    for (final place in places) {
+      if (place.id == selectedPlaceId) return place;
+    }
+    return null;
+  }
 
   /// [places] after the in-memory search filter. Derived, never stored, so it
   /// can't drift out of sync with [places] / [searchQuery].
