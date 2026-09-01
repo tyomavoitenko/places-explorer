@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_env.dart';
 import '../../../../core/di/injector.dart';
 import '../../../../core/router/app_router.dart';
 import '../bloc/places_bloc.dart';
 import '../widgets/category_filter_bar.dart';
+import '../widgets/missing_key_banner.dart';
 import '../widgets/places_body.dart';
 import '../widgets/places_list_sheet.dart';
 import '../widgets/places_search_field.dart';
@@ -35,15 +37,16 @@ class PlacesMapPage extends StatelessWidget {
             child: const Icon(Icons.format_list_bulleted),
           ),
         ),
-        body: const Column(
+        body: Column(
           children: [
-            Padding(
+            if (!AppEnv.hasGeoapifyKey) const MissingKeyBanner(),
+            const Padding(
               padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
               child: PlacesSearchField(),
             ),
-            CategoryFilterBar(),
-            SizedBox(height: 8),
-            Expanded(child: PlacesBody()),
+            const CategoryFilterBar(),
+            const SizedBox(height: 8),
+            const Expanded(child: PlacesBody()),
           ],
         ),
       ),
